@@ -1,0 +1,34 @@
+name: Build and Push Docker Image
+
+# Этот сценарий запускается при любом push в ветку 'main'
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write # Нужно для публикации в ghcr.io
+
+    steps:
+      # 1. Клонируем код репозитория
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Входим в реестр контейнеров GitHub
+      - name: Log in to the Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # 3. Собираем образ и присваиваем ему тег
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ghcr.io/${{ github.repository }}:latest
