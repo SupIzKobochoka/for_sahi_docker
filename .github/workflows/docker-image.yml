@@ -10,10 +10,10 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: write # Нужно для публикации в ghcr.io
+      packages: write
 
     steps:
-      # 1. Клонируем код репозитория
+      # 1. Клонируем репозиторий
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -25,10 +25,15 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # 3. Собираем образ и присваиваем ему тег
+      # 3. Новый шаг: Преобразуем имя репозитория в нижний регистр с помощью команды
+      - name: Convert repository name to lowercase
+        id: string
+        run: echo "repo_lc=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+
+      # 4. Шаг сборки и публикации (теперь использует результат шага 3)
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          tags: ghcr.io/${{ toLower(github.repository) }}:latest
+          tags: ghcr.io/${{ steps.string.outputs.repo_lc }}:latest
